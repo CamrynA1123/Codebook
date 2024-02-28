@@ -1,0 +1,232 @@
+---
+title: "Codebook"
+author: "Camryn Allen"
+date: "2024-02-28"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+  knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE
+  )
+
+knitr::knit_hooks$set(
+  inline = function(x) {
+       if(!is.numeric(x)){x}else{
+         prettyNum(round(x, 2), big.mark=",")
+       } 
+  }
+)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE
+  )
+
+knitr::knit_hooks$set(
+  inline = function(x) {
+       if(!is.numeric(x)){x}else{
+         prettyNum(round(x, 2), big.mark=",")
+       } 
+  }
+)
+```
+
+```{r setup, include=FALSE}
+library(tidyverse)
+df = read_sav('afro.sav') |>
+  select(
+    RESPNO,
+    COUNTRY,
+    DATEINTR,
+    Q1,
+    Q101, 
+    Q21,
+    Q6A, 
+    Q26, 
+    Q31, 
+    Q32
+  )  
+
+  
+  FctWhen = function(...) {
+    args = rlang::list2(...)
+    rhs = map(args, rlang::f_rhs)
+    cases = case_when( !!!args )
+    exec(fct_relevel, cases, !!!rhs)
+  }   
+
+  df2 = 
+    df |>
+    rename(
+      r_id = RESPNO,
+      c_name = COUNTRY,
+      r_year = DATEINTR,
+      r_age = Q1,
+      r_gender = Q101,
+      p_economy = Q6A,
+      sup4dem = Q21,
+      gov_pubvsown = Q26,
+      gov_compromise = Q31,
+      gov_lawvswill = Q32
+    ) 
+  
+  structure(df2)
+  df2 = df |>
+    filter(
+      Q101 == 2 #HELP: will not accept new var name "r_gender" 
+    )
+```
+# Country Name 
+Variable Name: COUNTRY - c_name
+
+Variable Type: Numeric 
+
+Description: Thirty-four out of fifty-four African countries were surveyed, each assigned an identifier number. 2: Angola, 3: Benin, 4: Botswana, 5: Burkina Faso, 6: Cape Verde, 7: Cameroon, 8: Cote d'Ivore, 9: Eswatini, 10: Ethiopia, 11: Gabon, 12: The Gambia, 13: Ghana, 14: Guinea, 15: Kenya, 16: Lesotho, 17: Liberia, 19: Malawi, 20: Mali, 21: Mauritania, 22: Morocco, 23: Mozambique, 24: Namibia, 25: Niger, 26: Nigeria, 28: Senegal, 29: Sierra Leone, 30: South Africa, 31: Sudan, 32: Tanzania, 33: Togo, 34: Tunisia, 35: Uganda, 36: Zambia, 37: Zimbabwe. It should be noted that numbers 18 and 27 were not included in the variable as they were not assigned to any country. 
+
+# Respondent ID
+Variable Name: RESPNO - r_id 
+
+Variable Type: String
+
+Description: The respondent ID is provided in the form of AAA000; the three letters reflecting the respondent's country and the three number placeholders representing the counted respondent. For example, CAM0594 identifies the 594th respondent from Cameroon. 
+
+# Year of the Interview 
+Variable Name: DATEINTR 
+
+Variable Type: Numeric 
+
+Description: This variable reflects the date on which the interview was conducted (recorded by the interviewer).
+
+
+# Binary Indicator for Female
+Variable Name: Q101 
+
+Variable Type: Numeric 
+
+Description: The gender of the respondent was recorded by the interviewer with the following values: 2=Female. All entries of "Male" were removed from the data. 
+
+# Age of Respondent 
+Variable: Q1
+
+Variable Type: Numeric 
+
+Description: Self-reported age of the respondent at time of the interview. The following values reported represent "Refused" (998), "Don't Know" (999), and "Missing" (-1). 
+
+```{r setup, include=FALSE}
+  df2 |>
+    summarise(
+      min = min(Q1, na.rm = T),
+      mean = mean(Q1, na.rm = T),
+      median = median(Q1, na.rm = T),
+      max = max(Q1, na.rm = T)
+    )
+    labelled(df2, labels = Q1("Missing" = -1, "Don't Know" = 999, "Refused" = 998))
+```
+
+# Evaluation of National Economy (Past Year)
+Variable Name: Q6A - p_economy
+
+Variable Type: Numeric 
+
+Description: Survey question 6A asks, "Looking back, how do you rate economic conditions in this country compared to twelve months ago?" Respondents provided answers from the following values: 1=Much worse, 2=Worse, 3=Same, 4=Better, 5=Much better, 8=Refused, 9=Don’t know, -1=Missing. 
+
+``` {r setup, include=FALSE}
+
+count(df2, Q6A) |>
+  mutate(
+    Value = as.numeric(Q6A),
+    Label = as_factor(Q6A),
+    Freq = n,
+    .keep = 'none'
+  ) |>
+  knitr::kable()
+```
+
+# Support for Democracy 
+Variable Name: Q21 - sup4dem
+
+Variable Type: Numeric 
+
+Value Label: 1 = Statement 3, 2 = Statement 2, 3 = Statement 1, 8 = Refused, 9 = Don't Know, -1 = Missing 
+
+Description: Question 21 reads, "Question: Which of these three statements is closest to your own opinion?" The options were as follows: Statement 1: "Democracy is preferable to any other kind of government."; Statement 2: "In some circumstances, a non-democratic government can be preferable."; Statement 3: "For someone like me, it doesn't matter what kind of government we have."  Interviewers read the questions in the language of the interview, however they always said the English word "democracy". Only if the respondent did not understand "democracy" did the interviewer translate the word into the native language. 
+
+``` {r setup, include=FALSE}
+count(df2, Q21) |>
+  mutate(
+    Value = as.numeric(Q21),
+    Label = as_factor(Q21),
+    Freq = n,
+    .keep = 'none'
+  ) |>
+  knitr::kable()
+```
+
+# Whether Elected Officials Should Follow Public Demands vs. Their Own Ideas 
+Variable Name: Q26 - eo_pubvown
+
+Variable Type: Numeric  
+
+Value Label:  1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with Statement 2,4=Agree very strongly with Statement 2, 5=Agree with neither, 8=Refused, 9=Don’t know, -1=Missing
+
+Description: Survey question 26 asks, "Which of the following statements is closest to your view? Choose Statement 1 or Statement 2 - Statement 1: Our elected officials should listen to constituents’ views and do what they demand.
+Statement 2: Our elected leaders should follow their own ideas in deciding what is best for the country." It should be noted that the interviewer encouraged boldness of answers by asking "Do you agree or agree very strongly?"
+
+```{r setup, include=FALSE}
+count(df2, Q26) |>
+  mutate(
+    Value = as.numeric(Q26),
+    Label = as_factor(Q26),
+    Freq = n,
+    .keep = 'none'
+  ) |>
+  knitr::kable()
+```
+# Whether Elected Officials Should Compromise on Policy or Not  
+Variable Name: Q31 
+
+Variable Type: Numeric  
+
+Value Label: 1 = Agree very strongly with Statement 1, 2 = Agree with Statement 1, 3 = Agree with Statement 2, 4 = Agree very strongly with Statement 2, 5=Agree with neither, 8 = Refused, 9 = Don’t know, -1 = Missing
+
+Description: Survey question 31 asks, "Which of the following statements is closest to your view? Choose Statement 1 or Statement 2. Statement 1: Whichever party or group wins elections should be able to pursue the policies they prefer, without needing to compromise with others. Statement 2: In a democracy, it is important to make compromises between the preferences and needs of different groups." It should be noted that the interviewer encouraged boldness of answers by asking "Do you agree or agree very strongly?"
+
+```{r setup, include=FALSE}
+count(df2, Q31) |>
+  mutate(
+    Value = as.numeric(Q31),
+    Label = as_factor(Q31),
+    Freq = n,
+    .keep = 'none'
+  ) |>
+  knitr::kable()
+```
+
+# Whether Gov't Should Follow Laws vs. People's Will   
+Variable Name: Q32 
+
+Variable Type: Numeric 
+
+Value Label: 1 = Agree very strongly with Statement 1, 2 = Agree with Statement 1, 3 = Agree with Statement 2, 4 = Agree very strongly with Statement 2, 5=Agree with neither, 8 = Refused, 9 = Don’t know, -1 = Missing
+
+Description: Survey question 32 asks, "Which of the following statements is closest to your view? Choose Statement 1 or Statement 2.
+Statement 1: A government that enjoys the support of the people should be free to do whatever the people want, even if it is outside the law. Statement 2: The actions of any government, no matter how popular it is, must always follow the law." It should be noted that the interviewer encouraged boldness of answers by asking "Do you agree or agree very strongly?"
+
+
+```{r setup, include=FALSE}
+count(df2, Q32) |>
+  mutate(
+    Value = as.numeric(Q32),
+    Label = as_factor(Q32),
+    Freq = n,
+    .keep = 'none'
+  ) |>
+  knitr::kable()
+```
